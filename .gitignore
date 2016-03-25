@@ -1,0 +1,4 @@
+*.img
+*.vhd
+*.vhd.bz2
+.vagrant
