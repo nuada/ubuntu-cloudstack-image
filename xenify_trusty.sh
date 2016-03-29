@@ -1,9 +1,30 @@
 #!/bin/bash
 
 apt-get update
-apt-get install -fy xenstore-utils curl wget byobu
+apt-get install -fy cloud-init xenstore-utils curl wget byobu
 
-# TODO auto attach data drive
+# Fix cloud-init #1523921 - # https://bugs.launchpad.net/ubuntu/+source/cloud-init/+bug/1523921
+wget -qO - 'http://bazaar.launchpad.net/~cloud-init-dev/cloud-init/trunk/diff/1084.2.2?context=3' | patch -p0 -d /usr/lib/python2.7/dist-packages
+
+# attach data drive
+cat > /etc/cloud/cloud.cfg.d/10_data.cfg <<EOF
+disk_setup:
+ /dev/xvdb:
+  type: mbr
+  layout: True
+  overwrite: False
+
+fs_setup:
+ - label: data
+   filesystem: ext4
+   device: /dev/xvdb1
+   partition: auto
+
+mounts:
+ - [ /dev/xvdb1, /mnt ]
+
+mount_default_fields: [ None, None, "ext4", "defaults,nobarrier,noatime,nobootwait", "0","2" ]
+EOF
 
 # setup cloud-init
 echo 'datasource_list: [ ConfigDrive, CloudStack, None ]' > /etc/cloud/cloud.cfg.d/90_dpkg.cfg
